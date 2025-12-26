@@ -26,31 +26,77 @@ class HomePage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text("Delete Account"),
-        content: TextField(
-          controller: passwordController,
-          obscureText: true,
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red.shade600),
+            const SizedBox(width: 10),
+            const Text("Delete Account"),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "This action cannot be undone. All your data will be permanently deleted.",
+              style: TextStyle(color: Colors.red),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: "Enter your password to confirm",
+                prefixIcon: const Icon(Icons.lock),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              passwordController.dispose();
+              Navigator.pop(dialogContext);
+            },
             child: const Text("Cancel"),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
             onPressed: () {
               final password = passwordController.text.trim();
+              if (password.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Please enter your password"),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              // Close dialog
               Navigator.pop(dialogContext);
+              passwordController.dispose();
+
+              // Dispatch delete event
               context.read<AuthBloc>().add(
                 DeleteAccountEvent(email, password),
               );
             },
-            child: const Text("Delete"),
+            child: const Text(
+              "Delete Account",
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -92,9 +138,9 @@ class HomePage extends StatelessWidget {
               );
             }
           },
-          child: BlocBuilder<AuthBloc, AuthState>(  // ✅ ADD THIS
-            builder: (context, state) {  // ✅ ADD THIS
-              final isLoading = state is AuthLoading;  // ✅ DEFINE HERE
+          child: BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, state) {
+              final isLoading = state is AuthLoading;
 
               return Center(
                 child: Padding(
@@ -148,6 +194,7 @@ class HomePage extends StatelessWidget {
 
                       const SizedBox(height: 60),
 
+                      // Logout Button
                       Container(
                         width: double.infinity,
                         height: 50,
@@ -194,6 +241,7 @@ class HomePage extends StatelessWidget {
 
                       const SizedBox(height: 16),
 
+                      // Delete Account Button
                       Container(
                         width: double.infinity,
                         height: 50,
@@ -239,8 +287,8 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
               );
-            },  // ✅ CLOSE BlocBuilder
-          ),  // ✅ CLOSE BlocBuilder
+            },
+          ),
         ),
       ),
     );
