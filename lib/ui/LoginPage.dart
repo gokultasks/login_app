@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:login_app/ui/widgets/app_button.dart';
+import '../bloc/AuthEvent/AuthEvent.dart';
+import '../bloc/AuthEvent/AuthSetEvent.dart';
+import '../bloc/AuthEvent/ResetEvent.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/AuthEvent/LoginEvent.dart';
 import '../bloc/AuthState/auth_state.dart';
@@ -11,13 +14,38 @@ import '../bloc/AuthState/auth_success_state.dart';
 import 'Signup.dart';
 import 'Home.dart';
 
-class LoginPage extends StatelessWidget {
-  LoginPage({super.key});
 
+
+
+class Loginpage extends StatefulWidget {
+  const Loginpage({super.key});
+
+  @override
+  State<Loginpage> createState() => _LoginpageState();
+}
+
+class _LoginpageState extends State<Loginpage> {
   final TextEditingController emailcontroller = TextEditingController();
   final TextEditingController passwordcontroller = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    context.read<AuthBloc>().add(SetSignupMode(false));
+    emailcontroller.addListener(() {
+      context.read<AuthBloc>().add(EmailChanged(emailcontroller.text.trim()));
+    });
+
+    passwordcontroller.addListener(() {
+      context.read<AuthBloc>().add(PasswordChanged(passwordcontroller.text.trim()));
+    });
+  }
+  @override
+  void dispose() {
+    emailcontroller.dispose();
+    passwordcontroller.dispose();
+    super.dispose();
+  }
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
@@ -25,11 +53,7 @@ class LoginPage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              Colors.amber.shade50,
-              Colors.amber.shade100,
-            ],
+            colors: [Colors.white, Colors.amber.shade50, Colors.amber.shade100],
           ),
         ),
         child: SafeArea(
@@ -39,10 +63,8 @@ class LoginPage extends StatelessWidget {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => HomePage(
-                      name: state.name,
-                      email: state.email,
-                    ),
+                    builder: (_) =>
+                        HomePage(name: state.name, email: state.email),
                   ),
                 );
               }
@@ -54,6 +76,9 @@ class LoginPage extends StatelessWidget {
                     backgroundColor: Colors.red.shade400,
                   ),
                 );
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  context.read<AuthBloc>().add(EmailChanged(emailcontroller.text.trim()));
+                });
               }
             },
             child: Center(
@@ -62,11 +87,7 @@ class LoginPage extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.login,
-                      size: 80,
-                      color: Colors.amber.shade600,
-                    ),
+                    Icon(Icons.login, size: 80, color: Colors.amber.shade600),
 
                     const SizedBox(height: 20),
 
@@ -81,14 +102,15 @@ class LoginPage extends StatelessWidget {
 
                     const SizedBox(height: 40),
 
-                    // EMAIL FIELD
                     TextField(
                       controller: emailcontroller,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         labelText: "Email",
-                        prefixIcon:
-                        Icon(Icons.email, color: Colors.amber.shade600),
+                        prefixIcon: Icon(
+                          Icons.email,
+                          color: Colors.amber.shade600,
+                        ),
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
@@ -100,14 +122,15 @@ class LoginPage extends StatelessWidget {
 
                     const SizedBox(height: 16),
 
-                    // PASSWORD FIELD
                     TextField(
                       controller: passwordcontroller,
                       obscureText: true,
                       decoration: InputDecoration(
                         labelText: "Password",
-                        prefixIcon:
-                        Icon(Icons.lock, color: Colors.amber.shade600),
+                        prefixIcon: Icon(
+                          Icons.lock,
+                          color: Colors.amber.shade600,
+                        ),
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
@@ -119,56 +142,22 @@ class LoginPage extends StatelessWidget {
 
                     const SizedBox(height: 30),
 
-                    // LOGIN BUTTON / LOADER
-                    BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        if (state is AuthLoading) {
-                          return CircularProgressIndicator(
-                            color: Colors.amber.shade600,
-                          );
-                        }
+                    BlocBuilder<AuthBloc,AuthState>(
+                        builder:(context,state){
+                          final isEnabled = state is! AuthLoading && state.isValid;
 
-                        return SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.amber.shade600,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () {
-                              context.read<AuthBloc>().add(
-                                LoginEvent(
-                                  emailcontroller.text.trim(),
-                                  passwordcontroller.text.trim(),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              "Login",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                          return AppButton(text: "Login",isLoading: state is AuthLoading, onPressed: isEnabled ? (){
+                            context.read<AuthBloc>().add(LoginEvent(emailcontroller.text.trim(),passwordcontroller.text.trim()));
+                          }: null);
+                        }),
 
                     const SizedBox(height: 16),
 
-                    // SIGNUP NAVIGATION
                     TextButton(
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => SignupPage(),
-                          ),
+                          MaterialPageRoute(builder: (_) => SignupPage()),
                         );
                       },
                       child: Text(
@@ -189,3 +178,4 @@ class LoginPage extends StatelessWidget {
     );
   }
 }
+
