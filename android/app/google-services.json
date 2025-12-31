@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "29990556284",
+    "project_id": "loginauth-5c092",
+    "storage_bucket": "loginauth-5c092.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:29990556284:android:373536388ff25de2d2aff9",
+        "android_client_info": {
+          "package_name": "com.example.login1app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtPhR-sjn6zi4X-03AwN6XUl5ocgD3pjE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:29990556284:android:635af40cb75e0e7ad2aff9",
+        "android_client_info": {
+          "package_name": "com.example.login_app_v2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtPhR-sjn6zi4X-03AwN6XUl5ocgD3pjE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
