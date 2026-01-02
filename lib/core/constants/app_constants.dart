@@ -1,3 +1,5 @@
+//AppConstants.dart
+
 class AppConstants {
   static const String smtpHost = 'smtp.gmail.com';
   static const int smtpPort = 587;
