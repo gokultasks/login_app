@@ -151,7 +151,7 @@ class DatabaseHelper {
     return await db.insert('pending_operations', {
       'operation': operation,
       'itemId': itemId,
-      'itemData': jsonEncode(itemData),  // Use jsonEncode instead of toString()
+      'itemData': jsonEncode(itemData),
       'timestamp': DateTime.now().millisecondsSinceEpoch,
       'retryCount': 0,
     });
