@@ -44,7 +44,21 @@ class IsActiveChanged extends ItemFormEvent {
 }
 
 class FormSubmitted extends ItemFormEvent {
-  const FormSubmitted();
+  final String userId;
+
+  const FormSubmitted(this.userId);
+
+  @override
+  List<Object?> get props => [userId];
+}
+
+class UpdateItem extends ItemFormEvent {
+  final String itemId;
+
+  const UpdateItem(this.itemId);
+
+  @override
+  List<Object?> get props => [itemId];
 }
 
 class FormReset extends ItemFormEvent {

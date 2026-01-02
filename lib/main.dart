@@ -4,12 +4,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
 import 'presentation/bloc/item_list/item_list_bloc.dart';
-import 'presentation/bloc/item_list/item_list_event.dart';
+import 'presentation/bloc/connectivity/connectivity_bloc.dart';
 import 'presentation/screens/splash_screen.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/storage_repository.dart';
 import 'data/repositories/otp_repository.dart';
 import 'data/repositories/item_repository.dart';
+import 'data/local/local_data_source.dart';
+import 'data/services/sync_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +26,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localDataSource = LocalDataSource();
+    final itemRepository = ItemRepository(localDataSource: localDataSource);
+    final syncService = SyncService(
+      localDataSource: localDataSource,
+      itemRepository: itemRepository,
+    );
+    syncService.startListening();
+
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<AuthRepository>(
@@ -34,7 +44,13 @@ class MyApp extends StatelessWidget {
         ),
         RepositoryProvider<OtpRepository>(create: (context) => OtpRepository()),
         RepositoryProvider<ItemRepository>(
-          create: (context) => ItemRepository(),
+          create: (context) => itemRepository,
+        ),
+        RepositoryProvider<LocalDataSource>(
+          create: (context) => localDataSource,
+        ),
+        RepositoryProvider<SyncService>(
+          create: (context) => syncService,
         ),
       ],
       child: MultiBlocProvider(
@@ -47,9 +63,15 @@ class MyApp extends StatelessWidget {
             ),
           ),
           BlocProvider(
-            create: (context) =>
-                ItemListBloc(itemRepository: context.read<ItemRepository>())
-                  ..add(const LoadItems()),
+            create: (context) => ItemListBloc(
+              itemRepository: context.read<ItemRepository>(),
+              syncService: context.read<SyncService>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => ConnectivityBloc(
+              syncService: context.read<SyncService>(),
+            ),
           ),
         ],
         child: MaterialApp(

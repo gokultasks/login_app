@@ -46,6 +46,11 @@ dependencies:
   
   # Local Storage
   shared_preferences: ^2.3.3
+  sqflite: ^2.3.3+2
+  path_provider: ^2.1.5
+  
+  # Connectivity
+  connectivity_plus: ^6.1.2
   
   # Image Picker
   image_picker: ^1.1.2

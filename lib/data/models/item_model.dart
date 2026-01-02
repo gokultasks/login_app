@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ItemModel extends Equatable {
   final String id;
@@ -7,6 +8,7 @@ class ItemModel extends Equatable {
   final String category;
   final DateTime createdAt;
   final bool isActive;
+  final String userId;
 
   const ItemModel({
     required this.id,
@@ -15,7 +17,32 @@ class ItemModel extends Equatable {
     required this.category,
     required this.createdAt,
     required this.isActive,
+    required this.userId,
   });
+
+  factory ItemModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return ItemModel(
+      id: doc.id,
+      title: data['title'] as String,
+      description: data['description'] as String,
+      category: data['category'] as String,
+      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      isActive: data['isActive'] as bool,
+      userId: data['userId'] as String,
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'title': title,
+      'description': description,
+      'category': category,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'isActive': isActive,
+      'userId': userId,
+    };
+  }
 
   factory ItemModel.fromJson(Map<String, dynamic> json) {
     return ItemModel(
@@ -25,6 +52,7 @@ class ItemModel extends Equatable {
       category: json['category'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
       isActive: json['isActive'] as bool,
+      userId: json['userId'] as String,
     );
   }
 
@@ -36,6 +64,7 @@ class ItemModel extends Equatable {
       'category': category,
       'createdAt': createdAt.toIso8601String(),
       'isActive': isActive,
+      'userId': userId,
     };
   }
 
@@ -46,6 +75,7 @@ class ItemModel extends Equatable {
     String? category,
     DateTime? createdAt,
     bool? isActive,
+    String? userId,
   }) {
     return ItemModel(
       id: id ?? this.id,
@@ -54,16 +84,20 @@ class ItemModel extends Equatable {
       category: category ?? this.category,
       createdAt: createdAt ?? this.createdAt,
       isActive: isActive ?? this.isActive,
+      userId: userId ?? this.userId,
     );
   }
 
   @override
   List<Object?> get props => [
-    id,
-    title,
-    description,
-    category,
-    createdAt,
-    isActive,
-  ];
+        id,
+        title,
+        description,
+        category,
+        createdAt,
+        isActive,
+        userId,
+      ];
 }
+  
+

@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../data/models/item_model.dart';
+import '../bloc/auth/auth_bloc.dart';
+import '../bloc/auth/auth_state.dart';
 import '../bloc/item_form/item_form_bloc.dart';
 import '../bloc/item_form/item_form_event.dart';
 import '../bloc/item_form/item_form_state.dart';
 
 class ItemFormScreen extends StatefulWidget {
-  const ItemFormScreen({super.key});
+  final ItemModel? item;
+
+  const ItemFormScreen({super.key, this.item});
 
   @override
   State<ItemFormScreen> createState() => _ItemFormScreenState();
@@ -25,6 +30,19 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.item != null) {
+      _titleController.text = widget.item!.title;
+      _descriptionController.text = widget.item!.description;
+      context.read<ItemFormBloc>().add(TitleChanged(widget.item!.title));
+      context.read<ItemFormBloc>().add(DescriptionChanged(widget.item!.description));
+      context.read<ItemFormBloc>().add(CategoryChanged(widget.item!.category));
+      context.read<ItemFormBloc>().add(IsActiveChanged(widget.item!.isActive));
+    }
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
@@ -33,12 +51,14 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.item != null;
+    
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8E1),
       appBar: AppBar(
-        title: const Text(
-          'Add New Item',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+        title: Text(
+          isEditing ? 'Edit Item' : 'Add New Item',
+          style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFFFFB74D),
         elevation: 0,
@@ -48,16 +68,16 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
         listener: (context, state) {
           if (state.status == FormStatus.success) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Item added successfully!'),
+              SnackBar(
+                content: Text(isEditing ? 'Item updated successfully!' : 'Item added successfully!'),
                 backgroundColor: Colors.green,
               ),
             );
-            Navigator.pop(context, state.createdItem);
+            Navigator.pop(context, true);
           } else if (state.status == FormStatus.failure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.errorMessage ?? 'Failed to add item'),
+                content: Text(state.errorMessage ?? (isEditing ? 'Failed to update item' : 'Failed to add item')),
                 backgroundColor: Colors.red,
               ),
             );
@@ -330,9 +350,18 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                       onPressed: state.status == FormStatus.submitting
                           ? null
                           : () {
-                              context.read<ItemFormBloc>().add(
-                                const FormSubmitted(),
-                              );
+                              if (isEditing) {
+                                context.read<ItemFormBloc>().add(
+                                  UpdateItem(widget.item!.id),
+                                );
+                              } else {
+                                final authState = context.read<AuthBloc>().state;
+                                if (authState is AuthenticatedState) {
+                                  context.read<ItemFormBloc>().add(
+                                    FormSubmitted(authState.user.id),
+                                  );
+                                }
+                              }
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFFB74D),
@@ -354,8 +383,8 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                                 ),
                               ),
                             )
-                          : const Text(
-                              'Add Item',
+                          : Text(
+                              isEditing ? 'Save Changes' : 'Add Item',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,

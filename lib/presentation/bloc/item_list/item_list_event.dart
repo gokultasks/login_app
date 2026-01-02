@@ -9,15 +9,30 @@ abstract class ItemListEvent extends Equatable {
 }
 
 class LoadItems extends ItemListEvent {
-  const LoadItems();
+  final String userId;
+
+  const LoadItems(this.userId);
+
+  @override
+  List<Object?> get props => [userId];
 }
 
 class LoadMoreItems extends ItemListEvent {
-  const LoadMoreItems();
+  final String userId;
+
+  const LoadMoreItems(this.userId);
+
+  @override
+  List<Object?> get props => [userId];
 }
 
 class RefreshItems extends ItemListEvent {
-  const RefreshItems();
+  final String userId;
+
+  const RefreshItems(this.userId);
+
+  @override
+  List<Object?> get props => [userId];
 }
 
 class AddNewItem extends ItemListEvent {
@@ -27,4 +42,37 @@ class AddNewItem extends ItemListEvent {
 
   @override
   List<Object?> get props => [item];
+}
+
+class FilterItems extends ItemListEvent {
+  final String userId;
+  final String? category;
+  final bool? isActive;
+
+  const FilterItems({
+    required this.userId,
+    this.category,
+    this.isActive,
+  });
+
+  @override
+  List<Object?> get props => [userId, category, isActive];
+}
+
+class ClearFilters extends ItemListEvent {
+  final String userId;
+
+  const ClearFilters(this.userId);
+
+  @override
+  List<Object?> get props => [userId];
+}
+
+class DeleteItem extends ItemListEvent {
+  final String itemId;
+
+  const DeleteItem(this.itemId);
+
+  @override
+  List<Object?> get props => [itemId];
 }
