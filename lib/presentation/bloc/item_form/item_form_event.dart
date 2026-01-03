@@ -1,5 +1,15 @@
 import 'package:equatable/equatable.dart';
 
+enum FormFieldKey {
+  title,
+  description,
+  category,
+  isActive,
+  dueDate,
+  estimatedHours,
+  budget,
+}
+
 abstract class ItemFormEvent extends Equatable {
   const ItemFormEvent();
 
@@ -7,6 +17,40 @@ abstract class ItemFormEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class FormInitialized extends ItemFormEvent {
+  final String? itemId;
+  final Map<String, dynamic>? initialData;
+
+  const FormInitialized({this.itemId, this.initialData});
+
+  @override
+  List<Object?> get props => [itemId, initialData];
+}
+
+class FieldChanged<T> extends ItemFormEvent {
+  final FormFieldKey key;
+  final T value;
+
+  const FieldChanged(this.key, this.value);
+
+  @override
+  List<Object?> get props => [key, value];
+}
+
+class PartialSaveRequested extends ItemFormEvent {}
+
+class SubmitRequested extends ItemFormEvent {
+  final String userId;
+
+  const SubmitRequested(this.userId);
+
+  @override
+  List<Object?> get props => [userId];
+}
+
+class FormReset extends ItemFormEvent {}
+
+// Legacy events for backward compatibility
 class TitleChanged extends ItemFormEvent {
   final String title;
 
@@ -59,8 +103,4 @@ class UpdateItem extends ItemFormEvent {
 
   @override
   List<Object?> get props => [itemId];
-}
-
-class FormReset extends ItemFormEvent {
-  const FormReset();
 }

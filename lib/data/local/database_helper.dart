@@ -21,8 +21,9 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -36,7 +37,11 @@ class DatabaseHelper {
         category TEXT NOT NULL,
         isActive INTEGER NOT NULL,
         createdAt INTEGER NOT NULL,
-        updatedAt INTEGER
+        updatedAt INTEGER,
+        dueDate INTEGER,
+        estimatedHours REAL,
+        budget REAL,
+        attachments TEXT
       )
     ''');
 
@@ -56,6 +61,16 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX idx_category ON items(category)');
     await db.execute('CREATE INDEX idx_isActive ON items(isActive)');
     await db.execute('CREATE INDEX idx_createdAt ON items(createdAt)');
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add new columns for version 2
+      await db.execute('ALTER TABLE items ADD COLUMN dueDate INTEGER');
+      await db.execute('ALTER TABLE items ADD COLUMN estimatedHours REAL');
+      await db.execute('ALTER TABLE items ADD COLUMN budget REAL');
+      await db.execute('ALTER TABLE items ADD COLUMN attachments TEXT');
+    }
   }
 
  
@@ -198,6 +213,12 @@ class DatabaseHelper {
       'isActive': item.isActive ? 1 : 0,
       'createdAt': item.createdAt.millisecondsSinceEpoch,
       'updatedAt': null,
+      'dueDate': item.dueDate?.millisecondsSinceEpoch,
+      'estimatedHours': item.estimatedHours,
+      'budget': item.budget,
+      'attachments': item.attachments != null && item.attachments!.isNotEmpty
+          ? item.attachments!.join(',')
+          : null,
     };
   }
 
@@ -210,6 +231,14 @@ class DatabaseHelper {
       category: map['category'] as String,
       isActive: (map['isActive'] as int) == 1,
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
+      dueDate: map['dueDate'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['dueDate'] as int)
+          : null,
+      estimatedHours: map['estimatedHours'] as double?,
+      budget: map['budget'] as double?,
+      attachments: map['attachments'] != null
+          ? (map['attachments'] as String).split(',')
+          : null,
     );
   }
 

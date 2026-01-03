@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/repositories/item_repository.dart';
 import '../../../data/services/sync_service.dart';
+import '../../../data/models/item_model.dart';
 import 'item_list_event.dart';
 import 'item_list_state.dart';
 
@@ -40,6 +41,13 @@ class ItemListBloc extends Bloc<ItemListEvent, ItemListState> {
         categoryFilter: state.categoryFilter,
         isActiveFilter: state.isActiveFilter,
       );
+      
+      // Remove duplicates by ID (keep first occurrence)
+      final uniqueItems = <String, ItemModel>{};
+      for (var item in items) {
+        uniqueItems[item.id] = item;
+      }
+      final deduplicatedItems = uniqueItems.values.toList();
 
       final lastDoc = await itemRepository.getLastDocument(
         userId: event.userId,
@@ -51,8 +59,8 @@ class ItemListBloc extends Bloc<ItemListEvent, ItemListState> {
       emit(
         state.copyWith(
           status: ItemListStatus.success,
-          items: items,
-          hasReachedMax: items.length < pageSize,
+          items: deduplicatedItems,
+          hasReachedMax: deduplicatedItems.length < pageSize,
           lastDocument: lastDoc,
         ),
       );
@@ -88,9 +96,17 @@ class ItemListBloc extends Bloc<ItemListEvent, ItemListState> {
           state.copyWith(status: ItemListStatus.success, hasReachedMax: true),
         );
       } else {
+        // Merge items and remove duplicates by ID
+        final allItems = [...state.items, ...newItems];
+        final uniqueItems = <String, ItemModel>{};
+        for (var item in allItems) {
+          uniqueItems[item.id] = item;
+        }
+        final deduplicatedItems = uniqueItems.values.toList();
+        
         final lastDoc = await itemRepository.getLastDocument(
           userId: event.userId,
-          pageSize: state.items.length + newItems.length,
+          pageSize: deduplicatedItems.length,
           categoryFilter: state.categoryFilter,
           isActiveFilter: state.isActiveFilter,
         );
@@ -98,7 +114,7 @@ class ItemListBloc extends Bloc<ItemListEvent, ItemListState> {
         emit(
           state.copyWith(
             status: ItemListStatus.success,
-            items: List.of(state.items)..addAll(newItems),
+            items: deduplicatedItems,
             hasReachedMax: newItems.length < pageSize,
             lastDocument: lastDoc,
           ),
@@ -131,6 +147,13 @@ class ItemListBloc extends Bloc<ItemListEvent, ItemListState> {
         categoryFilter: state.categoryFilter,
         isActiveFilter: state.isActiveFilter,
       );
+      
+      // Remove duplicates by ID (keep first occurrence)
+      final uniqueItems = <String, ItemModel>{};
+      for (var item in items) {
+        uniqueItems[item.id] = item;
+      }
+      final deduplicatedItems = uniqueItems.values.toList();
 
       final lastDoc = await itemRepository.getLastDocument(
         userId: event.userId,
@@ -142,8 +165,8 @@ class ItemListBloc extends Bloc<ItemListEvent, ItemListState> {
       emit(
         state.copyWith(
           status: ItemListStatus.success,
-          items: items,
-          hasReachedMax: items.length < pageSize,
+          items: deduplicatedItems,
+          hasReachedMax: deduplicatedItems.length < pageSize,
           lastDocument: lastDoc,
           errorMessage: null,
         ),
@@ -162,7 +185,19 @@ class ItemListBloc extends Bloc<ItemListEvent, ItemListState> {
     AddNewItem event,
     Emitter<ItemListState> emit,
   ) async {
-    final updatedItems = [event.item, ...state.items];
+    // Check if item already exists to prevent duplicates
+    final existingIndex = state.items.indexWhere((item) => item.id == event.item.id);
+    final List<ItemModel> updatedItems;
+    
+    if (existingIndex != -1) {
+      // Replace existing item
+      updatedItems = List.from(state.items);
+      updatedItems[existingIndex] = event.item;
+    } else {
+      // Add new item at the beginning
+      updatedItems = [event.item, ...state.items];
+    }
+    
     emit(state.copyWith(items: updatedItems, status: ItemListStatus.success));
   }
 

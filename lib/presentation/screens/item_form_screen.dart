@@ -77,7 +77,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
           } else if (state.status == FormStatus.failure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.errorMessage ?? (isEditing ? 'Failed to update item' : 'Failed to add item')),
+                content: Text(state.globalError ?? (isEditing ? 'Failed to update item' : 'Failed to add item')),
                 backgroundColor: Colors.red,
               ),
             );
@@ -125,7 +125,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: state.titleError != null
+                              color: state.errors[FormFieldKey.title] != null
                                   ? Colors.red
                                   : const Color(0xFFFFB74D),
                               width: 1,
@@ -150,11 +150,11 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                             ),
                           ),
                         ),
-                        if (state.titleError != null)
+                        if (state.errors[FormFieldKey.title] != null)
                           Padding(
-                            padding: const EdgeInsets.only(top: 8, left: 12),
+                            padding: const EdgeInsets.only(top: 8),
                             child: Text(
-                              state.titleError!,
+                              state.errors[FormFieldKey.title]!,
                               style: const TextStyle(
                                 color: Colors.red,
                                 fontSize: 12,
@@ -186,7 +186,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: state.descriptionError != null
+                              color: state.errors[FormFieldKey.description] != null
                                   ? Colors.red
                                   : const Color(0xFFFFB74D),
                               width: 1,
@@ -215,11 +215,11 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                             ),
                           ),
                         ),
-                        if (state.descriptionError != null)
+                        if (state.errors[FormFieldKey.description] != null)
                           Padding(
-                            padding: const EdgeInsets.only(top: 8, left: 12),
+                            padding: const EdgeInsets.only(top: 8),
                             child: Text(
-                              state.descriptionError!,
+                              state.errors[FormFieldKey.description]!,
                               style: const TextStyle(
                                 color: Colors.red,
                                 fontSize: 12,
@@ -251,7 +251,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: state.categoryError != null
+                              color: state.errors[FormFieldKey.category] != null
                                   ? Colors.red
                                   : const Color(0xFFFFB74D),
                               width: 1,
@@ -288,11 +288,11 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                             },
                           ),
                         ),
-                        if (state.categoryError != null)
+                        if (state.errors[FormFieldKey.category] != null)
                           Padding(
-                            padding: const EdgeInsets.only(top: 8, left: 12),
+                            padding: const EdgeInsets.only(top: 8),
                             child: Text(
-                              state.categoryError!,
+                              state.errors[FormFieldKey.category]!,
                               style: const TextStyle(
                                 color: Colors.red,
                                 fontSize: 12,
@@ -347,7 +347,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                 BlocBuilder<ItemFormBloc, ItemFormState>(
                   builder: (context, state) {
                     return ElevatedButton(
-                      onPressed: state.status == FormStatus.submitting
+                      onPressed: state.status == FormStatus.loading
                           ? null
                           : () {
                               if (isEditing) {
@@ -372,7 +372,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                         ),
                         elevation: 0,
                       ),
-                      child: state.status == FormStatus.submitting
+                      child: state.status == FormStatus.loading
                           ? const SizedBox(
                               height: 20,
                               width: 20,

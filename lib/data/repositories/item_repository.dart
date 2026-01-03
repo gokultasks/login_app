@@ -117,15 +117,20 @@ class ItemRepository {
   }
 
   Future<ItemModel> addItem({
+    String? id,
     required String userId,
     required String title,
     required String description,
     required String category,
     required bool isActive,
+    DateTime? dueDate,
+    double? estimatedHours,
+    double? budget,
   }) async {
     try {
-      final docRef =
-          _firestore.collection(AppConstants.itemsCollection).doc();
+      final docRef = id != null
+          ? _firestore.collection(AppConstants.itemsCollection).doc(id)
+          : _firestore.collection(AppConstants.itemsCollection).doc();
 
       final item = ItemModel(
         id: docRef.id,
@@ -135,21 +140,24 @@ class ItemRepository {
         createdAt: DateTime.now(),
         isActive: isActive,
         userId: userId,
+        dueDate: dueDate,
+        estimatedHours: estimatedHours,
+        budget: budget,
       );
 
       final isOnline = await _isOnline();
 
       if (isOnline) {
-        // Add to Firestore
+      
         await docRef.set(item.toFirestore());
-        // Cache locally
+
         await _localDataSource.updateCachedItem(item);
       } else {
-        // Store locally and queue for sync
+
         await _localDataSource.updateCachedItem(item);
         await _localDataSource.addPendingOperation(
           operation: 'create',
-          itemData: jsonDecode(jsonEncode(item.toFirestore())),
+          itemData: item.toJson(),
         );
       }
 
@@ -165,6 +173,9 @@ class ItemRepository {
     String? description,
     String? category,
     bool? isActive,
+    DateTime? dueDate,
+    double? estimatedHours,
+    double? budget,
   }) async {
     try {
       final updates = <String, dynamic>{};
@@ -173,6 +184,9 @@ class ItemRepository {
       if (description != null) updates['description'] = description;
       if (category != null) updates['category'] = category;
       if (isActive != null) updates['isActive'] = isActive;
+      if (dueDate != null) updates['dueDate'] = Timestamp.fromDate(dueDate);
+      if (estimatedHours != null) updates['estimatedHours'] = estimatedHours;
+      if (budget != null) updates['budget'] = budget;
 
       if (updates.isEmpty) return;
 
@@ -196,15 +210,27 @@ class ItemRepository {
             category: category ?? item.category,
             isActive: isActive ?? item.isActive,
             createdAt: item.createdAt,
+            dueDate: dueDate ?? item.dueDate,
+            estimatedHours: estimatedHours ?? item.estimatedHours,
+            budget: budget ?? item.budget,
           );
           await _localDataSource.updateCachedItem(updatedItem);
         }
       } else {
-        // Queue for sync
+        
+        final offlineUpdates = <String, dynamic>{};
+        if (title != null) offlineUpdates['title'] = title;
+        if (description != null) offlineUpdates['description'] = description;
+        if (category != null) offlineUpdates['category'] = category;
+        if (isActive != null) offlineUpdates['isActive'] = isActive;
+        if (dueDate != null) offlineUpdates['dueDate'] = dueDate.toIso8601String();
+        if (estimatedHours != null) offlineUpdates['estimatedHours'] = estimatedHours;
+        if (budget != null) offlineUpdates['budget'] = budget;
+        
         await _localDataSource.addPendingOperation(
           operation: 'update',
           itemId: itemId,
-          itemData: updates,
+          itemData: offlineUpdates,
         );
         
         // Update local cache optimistically
@@ -218,6 +244,9 @@ class ItemRepository {
             category: category ?? item.category,
             isActive: isActive ?? item.isActive,
             createdAt: item.createdAt,
+            dueDate: dueDate ?? item.dueDate,
+            estimatedHours: estimatedHours ?? item.estimatedHours,
+            budget: budget ?? item.budget,
           );
           await _localDataSource.updateCachedItem(updatedItem);
         }
@@ -232,21 +261,21 @@ class ItemRepository {
       final isOnline = await _isOnline();
 
       if (isOnline) {
-        // Delete from Firestore
+ 
         await _firestore
             .collection(AppConstants.itemsCollection)
             .doc(itemId)
             .delete();
-        // Delete from cache
+  
         await _localDataSource.deleteCachedItem(itemId);
       } else {
-        // Queue for sync
+ 
         await _localDataSource.addPendingOperation(
           operation: 'delete',
           itemId: itemId,
           itemData: {},
         );
-        // Delete from cache optimistically
+
         await _localDataSource.deleteCachedItem(itemId);
       }
     } catch (e) {
@@ -267,15 +296,15 @@ class ItemRepository {
         if (!doc.exists) return null;
 
         final item = ItemModel.fromFirestore(doc);
-        // Cache it
+     
         await _localDataSource.updateCachedItem(item);
         return item;
       } else {
-        // Return from cache
+     
         return await _localDataSource.getCachedItemById(itemId);
       }
     } catch (e) {
-      // Try cache on error
+     
       try {
         return await _localDataSource.getCachedItemById(itemId);
       } catch (_) {

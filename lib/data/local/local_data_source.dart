@@ -33,7 +33,8 @@ class LocalDataSource {
 
 
   Future<void> updateCachedItem(ItemModel item) async {
-    await _dbHelper.updateItem(item);
+   
+    await _dbHelper.insertItem(item);
   }
 
 

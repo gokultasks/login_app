@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/item_model.dart';
 import '../../data/repositories/item_repository.dart';
 import '../../data/services/sync_service.dart';
+import '../../data/local/draft_storage.dart';
 import '../bloc/auth/auth_bloc.dart';
 import '../bloc/auth/auth_state.dart';
 import '../bloc/item_list/item_list_bloc.dart';
@@ -10,7 +12,7 @@ import '../bloc/item_list/item_list_event.dart';
 import '../bloc/item_list/item_list_state.dart';
 import '../bloc/item_form/item_form_bloc.dart';
 import '../bloc/connectivity/connectivity_bloc.dart';
-import 'item_form_screen.dart';
+import 'advanced_item_form_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -247,19 +249,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     final item = state.items[index];
                     return _ItemCard(
+                      key: ValueKey(item.id),
                       item: item,
                       onDelete: () {
                         context.read<ItemListBloc>().add(DeleteItem(item.id));
                       },
                       onEdit: () async {
+                        final prefs = await SharedPreferences.getInstance();
                         final result = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => BlocProvider(
                               create: (context) => ItemFormBloc(
                                 itemRepository: context.read<ItemRepository>(),
+                                draftStorage: DraftStorage(prefs: prefs),
                               ),
-                              child: ItemFormScreen(item: item),
+                              child: AdvancedItemFormScreen(item: item),
                             ),
                           ),
                         );
@@ -283,14 +288,16 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
+          final prefs = await SharedPreferences.getInstance();
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => BlocProvider(
                 create: (context) => ItemFormBloc(
                   itemRepository: context.read<ItemRepository>(),
+                  draftStorage: DraftStorage(prefs: prefs),
                 ),
-                child: const ItemFormScreen(),
+                child: const AdvancedItemFormScreen(),
               ),
             ),
           );
@@ -420,6 +427,7 @@ class _ItemCard extends StatelessWidget {
   final VoidCallback onEdit;
 
   const _ItemCard({
+    super.key,
     required this.item,
     required this.onDelete,
     required this.onEdit,
@@ -531,6 +539,90 @@ class _ItemCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 16),
+              
+              // Show budget and estimated hours if available
+              if (item.budget != null || item.estimatedHours != null || item.dueDate != null) ...[
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: [
+                    if (item.dueDate != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.calendar_today, size: 14, color: Colors.orange[700]),
+                            const SizedBox(width: 6),
+                            Text(
+                              _formatDate(item.dueDate!),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.orange[800],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (item.estimatedHours != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.timer_outlined, size: 14, color: Colors.blue[700]),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${item.estimatedHours}h',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.blue[800],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (item.budget != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.attach_money, size: 14, color: Colors.green[700]),
+                            const SizedBox(width: 6),
+                            Text(
+                              '\$${item.budget!.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.green[800],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
+              
               Divider(height: 1, color: Colors.grey[200]),
               const SizedBox(height: 12),
               Row(

@@ -9,6 +9,10 @@ class ItemModel extends Equatable {
   final DateTime createdAt;
   final bool isActive;
   final String userId;
+  final DateTime? dueDate;
+  final double? estimatedHours;
+  final double? budget;
+  final List<String>? attachments;
 
   const ItemModel({
     required this.id,
@@ -18,6 +22,10 @@ class ItemModel extends Equatable {
     required this.createdAt,
     required this.isActive,
     required this.userId,
+    this.dueDate,
+    this.estimatedHours,
+    this.budget,
+    this.attachments,
   });
 
   factory ItemModel.fromFirestore(DocumentSnapshot doc) {
@@ -30,6 +38,18 @@ class ItemModel extends Equatable {
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       isActive: data['isActive'] as bool,
       userId: data['userId'] as String,
+      dueDate: data['dueDate'] != null 
+          ? (data['dueDate'] as Timestamp).toDate() 
+          : null,
+      estimatedHours: data['estimatedHours'] != null 
+          ? (data['estimatedHours'] as num).toDouble() 
+          : null,
+      budget: data['budget'] != null 
+          ? (data['budget'] as num).toDouble() 
+          : null,
+      attachments: data['attachments'] != null 
+          ? List<String>.from(data['attachments'] as List) 
+          : null,
     );
   }
 
@@ -41,6 +61,10 @@ class ItemModel extends Equatable {
       'createdAt': Timestamp.fromDate(createdAt),
       'isActive': isActive,
       'userId': userId,
+      if (dueDate != null) 'dueDate': Timestamp.fromDate(dueDate!),
+      if (estimatedHours != null) 'estimatedHours': estimatedHours,
+      if (budget != null) 'budget': budget,
+      if (attachments != null) 'attachments': attachments,
     };
   }
 
@@ -53,6 +77,18 @@ class ItemModel extends Equatable {
       createdAt: DateTime.parse(json['createdAt'] as String),
       isActive: json['isActive'] as bool,
       userId: json['userId'] as String,
+      dueDate: json['dueDate'] != null 
+          ? DateTime.parse(json['dueDate'] as String) 
+          : null,
+      estimatedHours: json['estimatedHours'] != null 
+          ? (json['estimatedHours'] as num).toDouble() 
+          : null,
+      budget: json['budget'] != null 
+          ? (json['budget'] as num).toDouble() 
+          : null,
+      attachments: json['attachments'] != null 
+          ? List<String>.from(json['attachments'] as List) 
+          : null,
     );
   }
 
@@ -65,6 +101,10 @@ class ItemModel extends Equatable {
       'createdAt': createdAt.toIso8601String(),
       'isActive': isActive,
       'userId': userId,
+      if (dueDate != null) 'dueDate': dueDate!.toIso8601String(),
+      if (estimatedHours != null) 'estimatedHours': estimatedHours,
+      if (budget != null) 'budget': budget,
+      if (attachments != null) 'attachments': attachments,
     };
   }
 
@@ -76,6 +116,10 @@ class ItemModel extends Equatable {
     DateTime? createdAt,
     bool? isActive,
     String? userId,
+    DateTime? dueDate,
+    double? estimatedHours,
+    double? budget,
+    List<String>? attachments,
   }) {
     return ItemModel(
       id: id ?? this.id,
@@ -85,6 +129,10 @@ class ItemModel extends Equatable {
       createdAt: createdAt ?? this.createdAt,
       isActive: isActive ?? this.isActive,
       userId: userId ?? this.userId,
+      dueDate: dueDate ?? this.dueDate,
+      estimatedHours: estimatedHours ?? this.estimatedHours,
+      budget: budget ?? this.budget,
+      attachments: attachments ?? this.attachments,
     );
   }
 
@@ -97,7 +145,14 @@ class ItemModel extends Equatable {
         createdAt,
         isActive,
         userId,
+        dueDate,
+        estimatedHours,
+        budget,
+        attachments,
       ];
 }
-  
+
+
+
+
 

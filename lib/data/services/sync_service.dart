@@ -20,7 +20,6 @@ class SyncService {
   })  : _localDataSource = localDataSource,
         _itemRepository = itemRepository;
 
-  /// Start listening to connectivity changes
   void startListening() {
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((result) {
       if (result.contains(ConnectivityResult.mobile) || 
@@ -30,19 +29,19 @@ class SyncService {
     });
   }
 
-  /// Stop listening to connectivity changes
+
   void stopListening() {
     _connectivitySubscription?.cancel();
   }
 
-  /// Check if device is online
+
   Future<bool> isOnline() async {
     final result = await _connectivity.checkConnectivity();
     return result.contains(ConnectivityResult.mobile) || 
            result.contains(ConnectivityResult.wifi);
   }
 
-  /// Queue an operation for later sync
+
   Future<void> queueOperation({
     required SyncOperationType type,
     String? itemId,
@@ -55,7 +54,7 @@ class SyncService {
     );
   }
 
-  /// Sync all pending operations
+
   Future<void> syncPendingOperations() async {
     if (_isSyncing) return;
     if (!await isOnline()) return;
@@ -70,10 +69,10 @@ class SyncService {
           await _executeOperation(op);
           await _localDataSource.removePendingOperation(op['id']);
         } catch (e) {
-          // Increment retry count
+      
           await _localDataSource.incrementOperationRetry(op['id']);
           
-          // Remove if retry count exceeds limit (e.g., 5 attempts)
+       
           if (op['retryCount'] >= 5) {
             await _localDataSource.removePendingOperation(op['id']);
           }
@@ -91,11 +90,17 @@ class SyncService {
     switch (operationType) {
       case 'create':
         await _itemRepository.addItem(
+          id: itemData['id'],
           userId: itemData['userId'],
           title: itemData['title'],
           description: itemData['description'],
           category: itemData['category'],
           isActive: itemData['isActive'],
+          dueDate: itemData['dueDate'] != null 
+              ? DateTime.parse(itemData['dueDate'])
+              : null,
+          estimatedHours: itemData['estimatedHours']?.toDouble(),
+          budget: itemData['budget']?.toDouble(),
         );
         break;
 
@@ -106,6 +111,15 @@ class SyncService {
           description: itemData.containsKey('description') ? itemData['description'] : null,
           category: itemData.containsKey('category') ? itemData['category'] : null,
           isActive: itemData.containsKey('isActive') ? itemData['isActive'] : null,
+          dueDate: itemData.containsKey('dueDate') && itemData['dueDate'] != null
+              ? DateTime.parse(itemData['dueDate'])
+              : null,
+          estimatedHours: itemData.containsKey('estimatedHours')
+              ? itemData['estimatedHours']?.toDouble()
+              : null,
+          budget: itemData.containsKey('budget')
+              ? itemData['budget']?.toDouble()
+              : null,
         );
         break;
 
@@ -119,7 +133,7 @@ class SyncService {
     try {
       return jsonDecode(data) as Map<String, dynamic>;
     } catch (e) {
-      // Fallback parsing if stored as string representation
+
       return {};
     }
   }
